@@ -138,9 +138,39 @@ int readall(int sock)
             return -1;
         }
         buffer[read] = '\0'; // null terminate
-        printf("%s", buffer);
+        printf("%d: %s", sock, buffer);
+        sendtoall(sock, buffer, read);
         if (buffer[read - 1] == '\n') break; // Input ends at newline
     } while (read != 0);
 
     return 0;
+}
+
+int sendall(int sock, char *buffer, int size)
+{
+    ssize_t sent = 0;
+    int total = 0;
+
+    do {
+        sent = send(sock, buffer, size, 0);
+        if (sent == -1) {
+            // Error sending
+            return -1;
+        }
+        total += sent;
+    } while (sent > 0 && total < size);
+
+    return total;
+}
+
+void sendtoall(int sock, char *buffer, int size)
+{
+    char leader[10];
+    sprintf(leader, "%d> ", sock);
+    for (int s = 0; s <= maxfd; s++) {
+        if (FD_ISSET(s, &master) && s != listensock) {
+            sendall(s, leader, strlen(leader));
+            sendall(s, buffer, size);
+        }
+    }
 }
