@@ -10,11 +10,13 @@
 #include <unistd.h>
 
 #include "sock.h"
+#include "user.h"
 
 int listensock = -1; // The server's listening socket
 int maxfd = -1;      // Max socket descriptor
 fd_set master;       // Master socket set
 fd_set readfds;      // Socket set for available reading
+t_userlist users;    // User list
 
 int createserver(char *port)
 {
@@ -24,6 +26,9 @@ int createserver(char *port)
     // Initialize our socket sets
     FD_ZERO(&master);
     FD_ZERO(&readfds);
+
+    // Initialize our user list
+    memset(&users, 0, sizeof(users));
     
     // Get our local settings for creating a server socket
     memset(&hints, 0, sizeof(hints));
@@ -122,6 +127,10 @@ int acceptnewconn()
         maxfd = newfd;
     }
 
+    // Create new user object
+    t_user *new = newuser(&users);
+    new->sock = newfd;
+
     printf("\tAccepted new connection on socket %d\n", newfd);
     return newfd;
 }
@@ -130,6 +139,7 @@ int readall(int sock)
 {
     char buffer[256];
     ssize_t read = 0;
+    t_user *user;
 
     do {
         read = recv(sock, buffer, sizeof(buffer) - 1, 0);
@@ -138,8 +148,21 @@ int readall(int sock)
             return -1;
         }
         buffer[read] = '\0'; // null terminate
-        printf("%d: %s", sock, buffer);
-        sendtoall(sock, buffer, read);
+        user = getuserbysock(&users, sock);
+        if (user == NULL) {
+            perror("Error locating user for current socket.");
+            return -1;
+        }
+        if (user->name == NULL) {
+            int len = strlen(buffer);
+            user->name = (char *) malloc(sizeof(buffer));
+            strncpy(user->name, buffer, len);
+            user->name[len - 2] = '\0'; // To replace the \r\n from telnet
+            printf("New user: %s\n", user->name);
+        } else {
+            printf("%s: %s", user->name, buffer);
+            sendtoall(user->name, buffer, read);
+        }
         if (buffer[read - 1] == '\n') break; // Input ends at newline
     } while (read != 0);
 
@@ -163,10 +186,10 @@ int sendall(int sock, char *buffer, int size)
     return total;
 }
 
-void sendtoall(int sock, char *buffer, int size)
+void sendtoall(char *user, char *buffer, int size)
 {
     char leader[10];
-    sprintf(leader, "%d> ", sock);
+    sprintf(leader, "%s> ", user);
     for (int s = 0; s <= maxfd; s++) {
         if (FD_ISSET(s, &master) && s != listensock) {
             sendall(s, leader, strlen(leader));

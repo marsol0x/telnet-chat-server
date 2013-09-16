@@ -13,5 +13,6 @@ typedef struct userlist {
 
 t_user * newuser(t_userlist *ul);
 void deluser(t_userlist *ul, t_user *u);
+t_user * getuserbysock(t_userlist *ul, int sock);
 
 #endif // USER_H
