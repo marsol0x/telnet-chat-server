@@ -4,10 +4,11 @@
 
 t_user * newuser(t_userlist *ul)
 {
-    t_userlist *p;
     t_user *u;
-    for (p = ul; (p->next != NULL) && (p->user != NULL); p = p->next);
-        // Go to end of userlist to append new user
+    t_userlist *p = ul;
+    while (p->next != NULL) {
+        p = p->next; // Go to end of userlist to append new user
+    }
     u = (t_user *) malloc(sizeof(t_user));
     u->name = NULL;
 
@@ -33,15 +34,13 @@ void deluser(t_userlist *ul, t_user *u)
 
 t_user * getuserbysock(t_userlist *ul, int sock)
 {
-    t_userlist *p;
-    for (p = ul;; p++) {
-        if ((p->user != NULL) && (p->user->sock == sock)) {
+    t_userlist *p = ul;
+    do {
+        if (p->user->sock == sock) {
             return p->user;
         }
-        if (p->next == NULL) {
-            return NULL;
-        }
-    }
+        p = p->next;
+    } while (p != NULL);
 
     // If we got here, we didn't find the user
     return NULL;
