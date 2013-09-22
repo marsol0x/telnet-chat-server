@@ -133,6 +133,12 @@ int acceptnewconn()
     t_user *new = newuser(&users);
     new->sock = newfd;
 
+    char *prompt = "What is your name?\r\n";
+    if (send(newfd, prompt, strlen(prompt), 0) == -1) {
+        perror("Error prompting new user for username.");
+        return -1;
+    }
+
     printf("\tAccepted new connection on socket %d\n", newfd);
     return newfd;
 }
