@@ -12,6 +12,8 @@
 #include "sock.h"
 #include "user.h"
 
+const char * const TELNET_EOL = "\n\r";
+
 int listensock = -1; // The server's listening socket
 int maxfd = -1;      // Max socket descriptor
 fd_set master;       // Master socket set
@@ -138,6 +140,7 @@ int acceptnewconn()
 int readall(int sock)
 {
     char buffer[256];
+    char *tok;
     ssize_t read = 0;
     t_user *user;
 
@@ -157,13 +160,20 @@ int readall(int sock)
             int len = strlen(buffer);
             user->name = (char *) malloc(sizeof(buffer));
             strncpy(user->name, buffer, len);
-            user->name[len - 2] = '\0'; // To replace the \r\n from telnet
+
+            // Replace the first instance of a character in TELNET_EOL with the
+            // null-terminator, we only need the first one since all subsequent
+            // will be auto-nulled by the placement.
+            tok = strtok(user->name, TELNET_EOL);
+            tok = '\0';
+
             printf("New user: %s\n", user->name);
         } else {
             printf("%s: %s", user->name, buffer);
             sendtoall(user->name, buffer, read);
         }
-        if (buffer[read - 1] == '\n') break; // Input ends at newline
+        tok = strtok(buffer, TELNET_EOL);
+        if (tok != NULL) break; // Input ends at TELNET_EOL
     } while (read != 0);
 
     return 0;
