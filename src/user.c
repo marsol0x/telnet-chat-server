@@ -22,13 +22,24 @@ t_user * newuser(t_userlist *ul)
     return u;
 }
 
-void deluser(t_userlist *ul, t_user *u)
+void deluser(t_userlist **ul, t_user *u)
 {
-    t_userlist *next, *p;
-    for (p = ul; p->next->user != u; p = p->next);
-        // Go to where the user is located
-    next = p->next->next;
-    p->next = next;
+    t_userlist *next, *p, *prev;
+    for (p = *ul; p->user != u; p = p->next) {
+        prev = p; // Find the user, but also keep track of previous user
+    }
+    if (p == *ul) {
+        if (p->next != NULL) {
+            *ul = p->next;
+            free(p);
+        } else {
+            p->user = NULL;
+        }
+    } else {
+        next = p->next;
+        prev->next = next;
+        free(p);
+    }
     free(u);
 }
 
@@ -36,7 +47,7 @@ t_user * getuserbysock(t_userlist *ul, int sock)
 {
     t_userlist *p = ul;
     do {
-        if (p->user->sock == sock) {
+        if ((p->user != NULL) && (p->user->sock == sock)) {
             return p->user;
         }
         p = p->next;
@@ -45,3 +56,4 @@ t_user * getuserbysock(t_userlist *ul, int sock)
     // If we got here, we didn't find the user
     return NULL;
 }
+

@@ -18,7 +18,7 @@ int listensock = -1; // The server's listening socket
 int maxfd = -1;      // Max socket descriptor
 fd_set master;       // Master socket set
 fd_set readfds;      // Socket set for available reading
-t_userlist users;    // User list
+t_userlist *users;   // User list
 
 int createserver(char *port)
 {
@@ -30,7 +30,8 @@ int createserver(char *port)
     FD_ZERO(&readfds);
 
     // Initialize our user list
-    memset(&users, 0, sizeof(users));
+    users = (t_userlist *) malloc(sizeof(t_userlist));
+    memset(users, 0, sizeof(t_userlist));
     
     // Get our local settings for creating a server socket
     memset(&hints, 0, sizeof(hints));
@@ -130,7 +131,7 @@ int acceptnewconn()
     }
 
     // Create new user object
-    t_user *new = newuser(&users);
+    t_user *new = newuser(users);
     new->sock = newfd;
 
     char *prompt = "What is your name?\r\n";
@@ -154,10 +155,12 @@ int readall(int sock)
         read = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (read <= 0) {
             // Connection closed
+            user = getuserbysock(users, sock);
+            deluser(&users, user);
             return -1;
         }
         buffer[read] = '\0'; // null terminate
-        user = getuserbysock(&users, sock);
+        user = getuserbysock(users, sock);
         if (user == NULL) {
             perror("Error locating user for current socket.");
             return -1;
