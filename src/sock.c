@@ -154,7 +154,7 @@ int readall(int sock)
     do {
         read = recv(sock, buffer, sizeof(buffer) - 1, 0);
         if (read <= 0) {
-            // Connection closed
+            // Connection closed, delete user
             user = getuserbysock(users, sock);
             deluser(&users, user);
             return -1;

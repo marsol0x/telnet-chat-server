@@ -1,5 +1,9 @@
 # Compiled app
 telnetchat
+
+# Debug information
+*.dSYM
+
 # Object files
 *.o
 
