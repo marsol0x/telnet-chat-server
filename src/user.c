@@ -2,29 +2,29 @@
 
 #include "user.h"
 
-t_user * newuser(t_userlist *ul)
+user * newuser(userlist *ul)
 {
-    t_user *u;
-    t_userlist *p = ul;
+    user *u;
+    userlist *p = ul;
     while (p->next != NULL) {
         p = p->next; // Go to end of userlist to append new user
     }
-    u = (t_user *) malloc(sizeof(t_user));
+    u = (user *) malloc(sizeof(user));
     u->name = NULL;
 
     if (p->user == NULL) {
         p->user = u;
     } else {
-        p->next = (t_userlist *) malloc(sizeof(t_userlist));
+        p->next = (userlist *) malloc(sizeof(userlist));
         p->next->next = NULL;
         p->next->user = u;
     }
     return u;
 }
 
-void deluser(t_userlist **ul, t_user *u)
+void deluser(userlist **ul, user *u)
 {
-    t_userlist *next, *p, *prev;
+    userlist *next, *p, *prev;
     for (p = *ul; p->user != u; p = p->next) {
         prev = p; // Find the user, but also keep track of previous user
     }
@@ -43,9 +43,9 @@ void deluser(t_userlist **ul, t_user *u)
     free(u);
 }
 
-t_user * getuserbysock(t_userlist *ul, int sock)
+user * getuserbysock(userlist *ul, int sock)
 {
-    t_userlist *p = ul;
+    userlist *p = ul;
     do {
         if ((p->user != NULL) && (p->user->sock == sock)) {
             return p->user;
