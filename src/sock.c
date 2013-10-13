@@ -18,7 +18,7 @@ int listensock = -1; // The server's listening socket
 int maxfd = -1;      // Max socket descriptor
 fd_set master;       // Master socket set
 fd_set readfds;      // Socket set for available reading
-t_userlist *users;   // User list
+userlist *users;     // Initialize global user list
 
 int createserver(char *port)
 {
@@ -30,8 +30,8 @@ int createserver(char *port)
     FD_ZERO(&readfds);
 
     // Initialize our user list
-    users = (t_userlist *) malloc(sizeof(t_userlist));
-    memset(users, 0, sizeof(t_userlist));
+    users = (userlist *) malloc(sizeof(userlist));
+    memset(users, 0, sizeof(userlist));
     
     // Get our local settings for creating a server socket
     memset(&hints, 0, sizeof(hints));
@@ -131,7 +131,7 @@ int acceptnewconn()
     }
 
     // Create new user object
-    t_user *new = newuser(users);
+    user *new = newuser(users);
     new->sock = newfd;
 
     char *prompt = "What is your name?\r\n";
@@ -149,7 +149,7 @@ int readall(int sock)
     char buffer[256];
     char *tok;
     ssize_t read = 0;
-    t_user *user;
+    user *user;
 
     do {
         read = recv(sock, buffer, sizeof(buffer) - 1, 0);

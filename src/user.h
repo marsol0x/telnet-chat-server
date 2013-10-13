@@ -4,15 +4,15 @@
 typedef struct user {
     int sock; // User's socket
     char *name; // User's name
-} t_user;
+} user;
 
 typedef struct userlist {
-    t_user *user;
+    user *user;
     struct userlist *next;
-} t_userlist;
+} userlist;
 
-t_user * newuser(t_userlist *ul);
-void deluser(t_userlist **ul, t_user *u);
-t_user * getuserbysock(t_userlist *ul, int sock);
+user * newuser(userlist *ul);
+void deluser(userlist **ul, user *u);
+user * getuserbysock(userlist *ul, int sock);
 
 #endif // USER_H
