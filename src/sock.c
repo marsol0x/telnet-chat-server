@@ -10,6 +10,7 @@
 #include <unistd.h>
 
 #include "sock.h"
+#include "parse.h"
 #include "user.h"
 
 #include "globals.h"
