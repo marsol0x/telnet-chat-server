@@ -12,7 +12,7 @@
 #include "sock.h"
 #include "user.h"
 
-const char * const TELNET_EOL = "\n\r";
+#include "globals.h"
 
 int listensock = -1; // The server's listening socket
 int maxfd = -1;      // Max socket descriptor
