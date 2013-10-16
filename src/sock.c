@@ -191,31 +191,15 @@ int readall(int sock)
     return 0;
 }
 
-int sendall(int sock, char *buffer, int size)
-{
-    ssize_t sent = 0;
-    int total = 0;
-
-    do {
-        sent = send(sock, buffer, size, 0);
-        if (sent == -1) {
-            // Error sending
-            return -1;
-        }
-        total += sent;
-    } while (sent > 0 && total < size);
-
-    return total;
-}
-
 void sendtoall(char *user, char *buffer, int size)
 {
-    char leader[10];
+    int leadersize = strlen(user) + 2;
+    char leader[leadersize];
     sprintf(leader, "%s> ", user);
     for (int s = 0; s <= maxfd; s++) {
         if (FD_ISSET(s, &master) && s != listensock) {
-            sendall(s, leader, strlen(leader));
-            sendall(s, buffer, size);
+            send(s, leader, leadersize, 0);
+            send(s, buffer, size, 0);
         }
     }
 }
