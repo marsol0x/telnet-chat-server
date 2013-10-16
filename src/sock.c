@@ -12,6 +12,7 @@
 #include "sock.h"
 #include "parse.h"
 #include "user.h"
+#include "strutils.h"
 
 #include "globals.h"
 
@@ -55,7 +56,7 @@ int createserver(char *port)
 
         error = setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(listensock));
         if (error == -1) {
-            perror("createserver: setsockopt"); // This is noteworthy, I think
+            fprintf(stderr, "createserver: setsockopt\n"); // This is noteworthy, I think
             close(listensock);
             continue;
         }
@@ -72,6 +73,7 @@ int createserver(char *port)
     // We never got a successful bind
     if (p == NULL) {
         fprintf(stderr, "createserver: Failed to bind port %s\n", port);
+        close(listensock);
         return -1;
     }
 
@@ -79,7 +81,8 @@ int createserver(char *port)
 
     error = listen(listensock, 10);
     if (error) {
-        perror("createserver: listen");
+        fprintf(stderr, "createserver: listen\n");
+        close(listensock);
         return -1;
     }
 
@@ -122,7 +125,7 @@ int acceptnewconn()
     
     newfd = accept(listensock, (struct sockaddr *) &remote, &addrlen);
     if (newfd == -1) {
-        perror("acceptnewconn: accept");
+        fprintf(stderr, "acceptnewconn: accept");
         return -1;
     }
 
@@ -137,7 +140,7 @@ int acceptnewconn()
 
     char *prompt = "What is your name?\r\n";
     if (send(newfd, prompt, strlen(prompt), 0) == -1) {
-        perror("Error prompting new user for username.");
+        fprintf(stderr, "Error prompting new user for username.\n");
         return -1;
     }
 
@@ -147,73 +150,43 @@ int acceptnewconn()
 
 int readall(int sock)
 {
-    char buffer[256];
+    char buffer[BUFFER_LEN];
+    char *bufpoint = buffer;
     char *tok;
     ssize_t read = 0;
+    ssize_t total = 0;
     user *user;
 
     do {
-        read = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        read = recv(sock, bufpoint, BUFFER_LEN - total - 1, 0);
         if (read <= 0) {
             // Connection closed, delete user
             user = getuserbysock(users, sock);
             deluser(&users, user);
             return -1;
         }
-        buffer[read] = '\0'; // null terminate
-        user = getuserbysock(users, sock);
-        if (user == NULL) {
-            perror("Error locating user for current socket.");
-            return -1;
-        }
-        if (user->name == NULL) {
-            int len = strlen(buffer);
-            user->name = (char *) malloc(sizeof(buffer));
-            strncpy(user->name, buffer, len);
+        total += read;
+        tok = strnchr(bufpoint, '\r', read);
+        bufpoint += total;
+    } while (!read && tok);
+    buffer[total] = '\0';
+    tok = strnchr(buffer, '\r', total);
+    tok = '\0';
 
-            // Replace the first instance of a character in TELNET_EOL with the
-            // null-terminator, we only need the first one since all subsequent
-            // will be auto-nulled by the placement.
-            tok = strtok(user->name, TELNET_EOL);
-            tok = '\0';
-
-            printf("New user: %s\n", user->name);
-        } else {
-            printf("%s: %s", user->name, buffer);
-            sendtoall(user->name, buffer, read);
-        }
-        tok = strtok(buffer, TELNET_EOL);
-        if (tok != NULL) break; // Input ends at TELNET_EOL
-    } while (read != 0);
+    parse(sock, buffer);
 
     return 0;
 }
 
-int sendall(int sock, char *buffer, int size)
-{
-    ssize_t sent = 0;
-    int total = 0;
-
-    do {
-        sent = send(sock, buffer, size, 0);
-        if (sent == -1) {
-            // Error sending
-            return -1;
-        }
-        total += sent;
-    } while (sent > 0 && total < size);
-
-    return total;
-}
-
 void sendtoall(char *user, char *buffer, int size)
 {
-    char leader[10];
+    int leadersize = strlen(user) + 2;
+    char leader[leadersize];
     sprintf(leader, "%s> ", user);
     for (int s = 0; s <= maxfd; s++) {
         if (FD_ISSET(s, &master) && s != listensock) {
-            sendall(s, leader, strlen(leader));
-            sendall(s, buffer, size);
+            send(s, leader, leadersize, 0);
+            send(s, buffer, size, 0);
         }
     }
 }
