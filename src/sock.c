@@ -55,7 +55,7 @@ int createserver(char *port)
 
         error = setsockopt(listensock, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(listensock));
         if (error == -1) {
-            perror("createserver: setsockopt"); // This is noteworthy, I think
+            fprintf(stderr, "createserver: setsockopt\n"); // This is noteworthy, I think
             close(listensock);
             continue;
         }
@@ -72,6 +72,7 @@ int createserver(char *port)
     // We never got a successful bind
     if (p == NULL) {
         fprintf(stderr, "createserver: Failed to bind port %s\n", port);
+        close(listensock);
         return -1;
     }
 
@@ -79,7 +80,8 @@ int createserver(char *port)
 
     error = listen(listensock, 10);
     if (error) {
-        perror("createserver: listen");
+        fprintf(stderr, "createserver: listen\n");
+        close(listensock);
         return -1;
     }
 
@@ -122,7 +124,7 @@ int acceptnewconn()
     
     newfd = accept(listensock, (struct sockaddr *) &remote, &addrlen);
     if (newfd == -1) {
-        perror("acceptnewconn: accept");
+        fprintf(stderr, "acceptnewconn: accept");
         return -1;
     }
 
@@ -137,7 +139,7 @@ int acceptnewconn()
 
     char *prompt = "What is your name?\r\n";
     if (send(newfd, prompt, strlen(prompt), 0) == -1) {
-        perror("Error prompting new user for username.");
+        fprintf(stderr, "Error prompting new user for username.\n");
         return -1;
     }
 
@@ -163,7 +165,7 @@ int readall(int sock)
         buffer[read] = '\0'; // null terminate
         user = getuserbysock(users, sock);
         if (user == NULL) {
-            perror("Error locating user for current socket.");
+            fprintf(stderr, "Error locating user for current socket: %d\n", sock);
             return -1;
         }
         if (user->name == NULL) {
