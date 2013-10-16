@@ -12,6 +12,7 @@
 #include "sock.h"
 #include "parse.h"
 #include "user.h"
+#include "strutils.h"
 
 #include "globals.h"
 
@@ -149,44 +150,30 @@ int acceptnewconn()
 
 int readall(int sock)
 {
-    char buffer[256];
+    char buffer[BUFFER_LEN];
+    char *bufpoint = buffer;
     char *tok;
     ssize_t read = 0;
+    ssize_t total = 0;
     user *user;
 
     do {
-        read = recv(sock, buffer, sizeof(buffer) - 1, 0);
+        read = recv(sock, bufpoint, BUFFER_LEN - total - 1, 0);
         if (read <= 0) {
             // Connection closed, delete user
             user = getuserbysock(users, sock);
             deluser(&users, user);
             return -1;
         }
-        buffer[read] = '\0'; // null terminate
-        user = getuserbysock(users, sock);
-        if (user == NULL) {
-            fprintf(stderr, "Error locating user for current socket: %d\n", sock);
-            return -1;
-        }
-        if (user->name == NULL) {
-            int len = strlen(buffer);
-            user->name = (char *) malloc(sizeof(buffer));
-            strncpy(user->name, buffer, len);
+        total += read;
+        tok = strnchr(bufpoint, '\r', read);
+        bufpoint += total;
+    } while (!read && tok);
+    buffer[total] = '\0';
+    tok = strnchr(buffer, '\r', total);
+    tok = '\0';
 
-            // Replace the first instance of a character in TELNET_EOL with the
-            // null-terminator, we only need the first one since all subsequent
-            // will be auto-nulled by the placement.
-            tok = strtok(user->name, TELNET_EOL);
-            tok = '\0';
-
-            printf("New user: %s\n", user->name);
-        } else {
-            printf("%s: %s", user->name, buffer);
-            sendtoall(user->name, buffer, read);
-        }
-        tok = strtok(buffer, TELNET_EOL);
-        if (tok != NULL) break; // Input ends at TELNET_EOL
-    } while (read != 0);
+    parse(sock, buffer);
 
     return 0;
 }
