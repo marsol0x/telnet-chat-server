@@ -168,10 +168,10 @@ int readall(int sock)
         total += read;
         tok = strnchr(bufpoint, '\r', read);
         bufpoint += total;
-    } while (!read && tok);
+    } while (!read && *(++tok) != '\n');
     buffer[total] = '\0';
     tok = strnchr(buffer, '\r', total);
-    tok = '\0';
+    *tok = '\0';
 
     parse(sock, buffer);
 
@@ -187,6 +187,7 @@ void sendtoall(char *user, char *buffer, int size)
         if (FD_ISSET(s, &master) && s != listensock) {
             send(s, leader, leadersize, 0);
             send(s, buffer, size, 0);
+            send(s, TELNET_EOL, 2, 0);
         }
     }
 }
