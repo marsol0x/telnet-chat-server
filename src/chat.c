@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     if (createserver(argv[1]) == -1) {
         return -1;
     }
-    
+
     for (;;) {
         pollconns();
     }

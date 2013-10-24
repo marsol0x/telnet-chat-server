@@ -24,7 +24,7 @@ userlist *users;     // Initialize global user list
 
 int createserver(char *port)
 {
-    struct addrinfo hints, *ai, *p; // Structures for 
+    struct addrinfo hints, *ai, *p; // Structures for
     int error; // Returned errors, if any
 
     // Initialize our socket sets
@@ -34,7 +34,7 @@ int createserver(char *port)
     // Initialize our user list
     users = (userlist *) malloc(sizeof(userlist));
     memset(users, 0, sizeof(userlist));
-    
+
     // Get our local settings for creating a server socket
     memset(&hints, 0, sizeof(hints));
     hints.ai_flags    = AI_PASSIVE;
@@ -88,7 +88,7 @@ int createserver(char *port)
 
     maxfd = listensock; // The one and only
     FD_SET(listensock, &master);
-    
+
     return listensock;
 }
 
@@ -96,7 +96,7 @@ void pollconns()
 {
     struct timeval timeout;
     memset(&timeout, 0, sizeof(timeout));
-    
+
     readfds = master;
     if (select(maxfd + 1, &readfds, NULL, NULL, NULL) != -1) {
         for (int s = 0; s <= maxfd; s++) {
@@ -113,7 +113,7 @@ void pollconns()
                     continue;
                 }
             }
-        } 
+        }
     } // Select
 }
 
@@ -122,7 +122,7 @@ int acceptnewconn()
     int newfd;
     struct sockaddr_storage remote;
     socklen_t addrlen = sizeof(remote);
-    
+
     newfd = accept(listensock, (struct sockaddr *) &remote, &addrlen);
     if (newfd == -1) {
         fprintf(stderr, "acceptnewconn: accept");
