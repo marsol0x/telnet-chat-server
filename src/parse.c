@@ -37,16 +37,24 @@ int parse(int sock, char *msg)
     // Check for command
     if (msg[0] == CMD_LEADER) {
         char *cmd_name = NULL;
+        char *args = NULL;
         command *cmd;
         int size;
-        char *end = strchr((msg + 1), ' ');
+        char *end;
 
-        if (end == NULL) {
+        if (strlen(msg) == 1) {
             senderror(user, "Invalid command");
             return -1;
         }
+        end = strchr((msg + 1), ' ');
+        // If end is NULL, we have a one-word command, no args
+        if (end == NULL) {
+            size = strlen(msg) - 1;
+        } else {
+            size = end - (msg + 1);
+            args = end + 1;
+        }
 
-        size = end - (msg + 1);
         cmd_name = (char *) malloc(size);
         strncpy(cmd_name, (msg + 1), size);
         cmd = (command *) ptab_get(commands, cmd_name);
@@ -56,7 +64,7 @@ int parse(int sock, char *msg)
             return -1;
         }
 
-        cmd->cmd(user, end + 1);
+        cmd->cmd(user, args);
         free(cmd_name);
         return 0;
     }
