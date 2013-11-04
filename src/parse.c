@@ -59,8 +59,10 @@ int parse(int sock, char *msg)
         strncpy(cmd_name, (msg + 1), size);
         cmd = (command *) ptab_get(commands, cmd_name);
         if (cmd == NULL) {
+            char output[100];
+            sprintf(output, "No such command: %s", cmd_name);
+            senderror(user, output);
             free(cmd_name);
-            senderror(user, "No such command");
             return -1;
         }
 
