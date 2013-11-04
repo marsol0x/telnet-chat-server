@@ -2,9 +2,11 @@
 #include "cmds.h"
 #include "ptab.h"
 
+ptab *commands;
+
 void commands_init()
 {
-    ptab *commands = ptab_init();
+    commands = ptab_init();
 
     command emote_cmd = {emote};
     ptab_add(commands, "emote", &emote_cmd);
