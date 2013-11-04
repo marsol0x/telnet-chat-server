@@ -191,6 +191,12 @@ void sendtoall(char *buffer)
     }
 }
 
+void sendtouser(user *u, char *msg) {
+    char output[BUFFER_LEN];
+    sprintf(output, "%s%s", msg, TELNET_EOL);
+    send(u->sock, output, strlen(output), 0);
+}
+
 void senderror(user *u, char *msg) {
     char error_msg[100];
     sprintf(error_msg, "error: %s%s", msg, TELNET_EOL);
