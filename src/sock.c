@@ -178,16 +178,21 @@ int readall(int sock)
     return 0;
 }
 
-void sendtoall(char *user, char *buffer, int size)
+void sendtoall(char *buffer)
 {
-    int leadersize = strlen(user) + 2;
-    char leader[leadersize];
-    sprintf(leader, "%s> ", user);
+    int size = strlen(buffer);
     for (int s = 0; s <= maxfd; s++) {
         if (FD_ISSET(s, &master) && s != listensock) {
-            send(s, leader, leadersize, 0);
-            send(s, buffer, size, 0);
-            send(s, TELNET_EOL, 2, 0);
+            char output[BUFFER_LEN];
+            sprintf(output, "%s%s", buffer, TELNET_EOL);
+            size = strlen(output);
+            send(s, output, size, 0);
         }
     }
+}
+
+void senderror(user *u, char *msg) {
+    char error_msg[100];
+    sprintf(error_msg, "error: %s%s", msg, TELNET_EOL);
+    send(u->sock, error_msg, strlen(error_msg), 0);
 }
