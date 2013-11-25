@@ -165,6 +165,11 @@ int readall(int sock)
             deluser(&users, user);
             return -1;
         }
+
+        // If the first character is actually a negative number, it means we
+        // got a telnet mode change, but we don't care.
+        if (buffer[0] < 0) return 0;
+
         total += read;
         tok = strnchr(bufpoint, '\r', read);
         bufpoint += total;
