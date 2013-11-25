@@ -155,13 +155,15 @@ int readall(int sock)
     char *tok;
     ssize_t read = 0;
     ssize_t total = 0;
-    user *user;
+    user *user = getuserbysock(users, sock);
 
+    // TODO: Shift this so that all input goes to a user's allocation buffer
+    // This will allow me to treat all input the same, regardless of it being
+    // character or line mode
     do {
         read = recv(sock, bufpoint, BUFFER_LEN - total - 1, 0);
         if (read <= 0) {
             // Connection closed, delete user
-            user = getuserbysock(users, sock);
             deluser(&users, user);
             return -1;
         }
