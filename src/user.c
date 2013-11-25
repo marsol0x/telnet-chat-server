@@ -10,7 +10,7 @@ user * newuser(userlist *ul)
         p = p->next; // Go to end of userlist to append new user
     }
     u = (user *) malloc(sizeof(user));
-    u->name = NULL;
+    memset(u->name, 0, USERNAMEMAX);
 
     if (p->user == NULL) {
         p->user = u;
@@ -57,3 +57,13 @@ user * getuserbysock(userlist *ul, int sock)
     return NULL;
 }
 
+void setusername(user *u, char *name)
+{
+    size_t namelen = strlen(name);
+    strncpy(u->name, name, USERNAMEMAX - 1);
+    if (namelen < USERNAMEMAX) {
+        u->name[namelen] = '\0';
+    } else {
+        u->name[USERNAMEMAX - 1] = '\0';
+    }
+}

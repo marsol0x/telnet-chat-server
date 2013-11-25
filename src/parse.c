@@ -24,11 +24,8 @@ int parse(int sock, char *msg)
 
     // If the username is non-existant, assume msg is the username
     // accept() asks for a username
-    if (user->name == NULL) {
-        int len = strlen(msg);
-        user->name = (char *) malloc(sizeof(msg));
-        strncpy(user->name, msg, len);
-
+    if (strlen(user->name) == 0) {
+        setusername(user, msg);
         printf("New user: %s\n", user->name);
 
         return 0;

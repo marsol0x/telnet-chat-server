@@ -35,8 +35,6 @@ COMMAND(nick)
         return;
     }
 
-    free(u->name);
-    u->name = (char *) malloc(strlen(args));
-    strncpy(u->name, args, strlen(args));
+    setusername(u, args);
     sendtouser(u, "Nickname changed");
 }
