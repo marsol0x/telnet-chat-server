@@ -6,6 +6,8 @@
 typedef struct user {
     int sock; // User's socket
     char name[USERNAMEMAX]; // User's name
+    char allocbuf[1024];
+    char *allocptr;
 } user;
 
 typedef struct userlist {

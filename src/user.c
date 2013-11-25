@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "user.h"
 
@@ -11,6 +12,8 @@ user * newuser(userlist *ul)
     }
     u = (user *) malloc(sizeof(user));
     memset(u->name, 0, USERNAMEMAX);
+    memset(u->allocbuf, 0, 1024);
+    u->allocptr = u->allocbuf;
 
     if (p->user == NULL) {
         p->user = u;
