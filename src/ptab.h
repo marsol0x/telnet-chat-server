@@ -3,9 +3,9 @@
 
 #define PTAB_MAX_PREFIX 26
 
-typedef struct ptab {
+typedef struct ptab_t {
     void *data;
-    struct ptab * prefix[PTAB_MAX_PREFIX];
+    struct ptab_t * prefix[PTAB_MAX_PREFIX];
 } ptab;
 
 ptab * ptab_init();

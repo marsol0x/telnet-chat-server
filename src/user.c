@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "user.h"
 
@@ -10,7 +11,10 @@ user * newuser(userlist *ul)
         p = p->next; // Go to end of userlist to append new user
     }
     u = (user *) malloc(sizeof(user));
-    u->name = NULL;
+    memset(u->name, 0, USERNAMEMAX);
+    memset(u->allocbuf, 0, 1024);
+    u->allocptr = u->allocbuf;
+    u->alloctotal = 0;
 
     if (p->user == NULL) {
         p->user = u;
@@ -57,3 +61,20 @@ user * getuserbysock(userlist *ul, int sock)
     return NULL;
 }
 
+void setusername(user *u, char *name)
+{
+    size_t namelen = strlen(name);
+    strncpy(u->name, name, USERNAMEMAX - 1);
+    if (namelen < USERNAMEMAX) {
+        u->name[namelen] = '\0';
+    } else {
+        u->name[USERNAMEMAX - 1] = '\0';
+    }
+}
+
+void resetuserbuffer(user *u)
+{
+    memset(u->allocbuf, 0, 1024);
+    u->allocptr = u->allocbuf;
+    u->alloctotal = 0;
+}

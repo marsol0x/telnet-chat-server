@@ -150,44 +150,59 @@ int acceptnewconn()
 
 int readall(int sock)
 {
-    char buffer[BUFFER_LEN];
-    char *bufpoint = buffer;
-    char *tok;
-    ssize_t read = 0;
-    ssize_t total = 0;
-    user *user;
+    unsigned char buffer[BUFFER_LEN];
+    size_t read = 0;
+    user *user = getuserbysock(users, sock);
 
-    do {
-        read = recv(sock, bufpoint, BUFFER_LEN - total - 1, 0);
-        if (read <= 0) {
-            // Connection closed, delete user
-            user = getuserbysock(users, sock);
-            deluser(&users, user);
-            return -1;
+    read = recv(sock, buffer, BUFFER_LEN - user->alloctotal - 1, 0);
+    if (read <= 0) {
+        // Connection closed, delete user
+        deluser(&users, user);
+        return -1;
+    }
+
+    // Check for telnet command and discard
+    // TODO: Do real handling of telnet commands
+    if (buffer[0] == 255) return 0;
+
+    if (BUFFER_LEN - user->alloctotal - read > 0) {
+        strncpy(user->allocptr, buffer, read);
+
+        user->allocptr += read;
+        char *end = strchr(user->allocbuf, '\r');
+        if (end && (buffer[read - 1] == '\0' || *(end + 1) == '\n')) {
+            parse(sock, user->allocbuf);
+            resetuserbuffer(user);
         }
-        total += read;
-        tok = strnchr(bufpoint, '\r', read);
-        bufpoint += total;
-    } while (!read && *(++tok) != '\n');
-    buffer[total] = '\0';
-    tok = strnchr(buffer, '\r', total);
-    *tok = '\0';
-
-    parse(sock, buffer);
+    } else {
+        sendtouser(user, "Buffer overflow");
+        resetuserbuffer(user);
+    }
 
     return 0;
 }
 
-void sendtoall(char *user, char *buffer, int size)
+void sendtoall(char *buffer)
 {
-    int leadersize = strlen(user) + 2;
-    char leader[leadersize];
-    sprintf(leader, "%s> ", user);
+    int size = strlen(buffer);
     for (int s = 0; s <= maxfd; s++) {
         if (FD_ISSET(s, &master) && s != listensock) {
-            send(s, leader, leadersize, 0);
-            send(s, buffer, size, 0);
-            send(s, TELNET_EOL, 2, 0);
+            char output[BUFFER_LEN];
+            sprintf(output, "%s%s", buffer, TELNET_EOL);
+            size = strlen(output);
+            send(s, output, size, 0);
         }
     }
+}
+
+void sendtouser(user *u, char *msg) {
+    char output[BUFFER_LEN];
+    sprintf(output, "%s%s", msg, TELNET_EOL);
+    send(u->sock, output, strlen(output), 0);
+}
+
+void senderror(user *u, char *msg) {
+    char error_msg[100];
+    sprintf(error_msg, "error: %s%s", msg, TELNET_EOL);
+    send(u->sock, error_msg, strlen(error_msg), 0);
 }

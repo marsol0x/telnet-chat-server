@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include "sock.h"
-#include "user.h"
+#include "command.h"
 
 int main(int argc, char **argv)
 {
@@ -14,6 +14,8 @@ int main(int argc, char **argv)
     if (createserver(argv[1]) == -1) {
         return -1;
     }
+
+    commands_init();
 
     for (;;) {
         pollconns();
