@@ -14,6 +14,7 @@ user * newuser(userlist *ul)
     memset(u->name, 0, USERNAMEMAX);
     memset(u->allocbuf, 0, 1024);
     u->allocptr = u->allocbuf;
+    u->alloctotal = 0;
 
     if (p->user == NULL) {
         p->user = u;
@@ -69,4 +70,11 @@ void setusername(user *u, char *name)
     } else {
         u->name[USERNAMEMAX - 1] = '\0';
     }
+}
+
+void resetuserbuffer(user *u)
+{
+    memset(u->allocbuf, 0, 1024);
+    u->allocptr = u->allocbuf;
+    u->alloctotal = 0;
 }

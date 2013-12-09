@@ -22,6 +22,10 @@ int parse(int sock, char *msg)
         return -1;
     }
 
+    // Remove telnet EOL
+    char *end = strchr(msg, '\r');
+    *end = '\0';
+
     // If the username is non-existant, assume msg is the username
     // accept() asks for a username
     if (strlen(user->name) == 0) {

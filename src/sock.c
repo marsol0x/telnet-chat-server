@@ -150,37 +150,34 @@ int acceptnewconn()
 
 int readall(int sock)
 {
-    char buffer[BUFFER_LEN];
-    char *bufpoint = buffer;
-    char *tok;
-    ssize_t read = 0;
-    ssize_t total = 0;
+    unsigned char buffer[BUFFER_LEN];
+    size_t read = 0;
     user *user = getuserbysock(users, sock);
 
-    // TODO: Shift this so that all input goes to a user's allocation buffer
-    // This will allow me to treat all input the same, regardless of it being
-    // character or line mode
-    do {
-        read = recv(sock, bufpoint, BUFFER_LEN - total - 1, 0);
-        if (read <= 0) {
-            // Connection closed, delete user
-            deluser(&users, user);
-            return -1;
+    read = recv(sock, buffer, BUFFER_LEN - user->alloctotal - 1, 0);
+    if (read <= 0) {
+        // Connection closed, delete user
+        deluser(&users, user);
+        return -1;
+    }
+
+    // Check for telnet command and discard
+    // TODO: Do real handling of telnet commands
+    if (buffer[0] == 255) return 0;
+
+    if (BUFFER_LEN - user->alloctotal - read > 0) {
+        strncpy(user->allocptr, buffer, read);
+
+        user->allocptr += read;
+        char *end = strchr(user->allocbuf, '\r');
+        if (end && (buffer[read - 1] == '\0' || *(end + 1) == '\n')) {
+            parse(sock, user->allocbuf);
+            resetuserbuffer(user);
         }
-
-        // If the first character is actually a negative number, it means we
-        // got a telnet mode change, but we don't care.
-        if (buffer[0] < 0) return 0;
-
-        total += read;
-        tok = strnchr(bufpoint, '\r', read);
-        bufpoint += total;
-    } while (!read && *(++tok) != '\n');
-    buffer[total] = '\0';
-    tok = strnchr(buffer, '\r', total);
-    *tok = '\0';
-
-    parse(sock, buffer);
+    } else {
+        sendtouser(user, "Buffer overflow");
+        resetuserbuffer(user);
+    }
 
     return 0;
 }
