@@ -166,12 +166,12 @@ int readall(int sock)
     if (buffer[0] == 255) return 0;
 
     if (BUFFER_LEN - user->alloctotal - read > 0) {
-        strncpy(user->allocptr, buffer, read);
+        strncpy((char *)user->allocptr, (const char *)buffer, read);
 
         user->allocptr += read;
-        char *end = strchr(user->allocbuf, '\r');
+        char *end = strchr((char *)user->allocbuf, '\r');
         if (end && (buffer[read - 1] == '\0' || *(end + 1) == '\n')) {
-            parse(sock, user->allocbuf);
+            parse(sock, (char *)user->allocbuf);
             resetuserbuffer(user);
         }
     } else {
